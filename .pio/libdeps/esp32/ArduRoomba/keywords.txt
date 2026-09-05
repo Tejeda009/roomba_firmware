@@ -1,0 +1,38 @@
+# ArduRoomba V3 Keywords
+
+# Class
+ArduRoomba	KEYWORD1
+RoombaOI	KEYWORD1
+
+# Methods (KEYWORD2)
+begin	KEYWORD2
+end	KEYWORD2
+isConnected	KEYWORD2
+moveForward	KEYWORD2
+moveBackward	KEYWORD2
+turnLeft	KEYWORD2
+turnRight	KEYWORD2
+stop	KEYWORD2
+drive	KEYWORD2
+driveDirect	KEYWORD2
+startCleaning	KEYWORD2
+spotClean	KEYWORD2
+dock	KEYWORD2
+getBatteryVoltage	KEYWORD2
+getBatteryCurrent	KEYWORD2
+isWallDetected	KEYWORD2
+isBumperPressed	KEYWORD2
+setBrushes	KEYWORD2
+setLED	KEYWORD2
+setPowerLED	KEYWORD2
+beep	KEYWORD2
+playTone	KEYWORD2
+setDebug	KEYWORD2
+getOI	KEYWORD2
+
+# Constants (LITERAL1)
+DRIVE_STRAIGHT	LITERAL1
+DRIVE_TURN_CCW	LITERAL1
+DRIVE_TURN_CW	LITERAL1
+MAX_VELOCITY	LITERAL1
+MIN_VELOCITY	LITERAL1
