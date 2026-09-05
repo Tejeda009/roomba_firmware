@@ -5,17 +5,14 @@
 #include "extensions/ArduRoombaESP32WiFi.h"
 #include "map.h"
 //#include "extensions/ArduRoombaBLE.h"
-#include <vector>
-#include <queue>
-#include <algorithm>
 
 using namespace std;
 
-// TODO remove overcurrent in updateSafety and use it to check if it found a smal obstacle
+// TODO remove overcurrent in updateSafety and use it to check if it found a small obstacle
 // TODO remove bumper detection in updateSafety and fix cliff detection
-// TODO implement mapping to show on a canvas in the web server with Spannig Tree Coverage
+// TODO implement mapping to show on a canvas in the web server with Spanning Tree Coverage
 // TODO implement simple path finding to improve dock function (WaveFront alg)
-// TODO imlement dock and spot function
+// TODO implement dock and spot function
 // TODO se dopo tot tempo non trova la base fermati e fai una melodia
 // TODO se trovi dirt detect allora guarda intorno e vedi se ne trovi altro
 // TODO fotoresistenze per non fermarsi sotto i divani
@@ -37,7 +34,7 @@ using namespace std;
 #define SSID "Roomba"
 //#define BLEID "Roomba"
 #define LED_PIN 2
-#define RATE 50 // rate limiting for netwrok commands
+#define RATE 50 // rate limiting for network commands
 
 // DIRT Threshold
 #define DIRT_MEDIUM 100
@@ -67,26 +64,38 @@ using namespace std;
 #define COLLISION_DELAY 50 // polling delay for collision()
 
 
-RoombaConfig config = RoombaConfig::createESP32(&Serial2, 5);
-ArduRoomba roomba(config);
+RoombaConfig static config = RoombaConfig::createESP32(&Serial2, 5);
+ArduRoomba static roomba(config);
 
-ArduRoombaESP32WiFi wifi(roomba);
+ArduRoombaESP32WiFi static wifi(roomba);
 //ArduRoombaBLE ble(roomba, BLEID);#include <Arduino.h>
 
-TaskHandle_t xNormal = NULL;
-TaskHandle_t xClean = NULL;
-TaskHandle_t xNetwork = NULL;
+TaskHandle_t static xNormal = nullptr;
+TaskHandle_t static xClean = nullptr;
+TaskHandle_t static xNetwork = nullptr;
 
-const unsigned long F1 = 10;
-const unsigned long F2 = 20;
-const unsigned long F3 = 50;
-const unsigned long F4 = 100;
-const unsigned long F5 = 500;
-const unsigned long F6 = 1000;
+constexpr unsigned long F1 = 10;
+constexpr unsigned long F2 = 20;
+constexpr unsigned long F3 = 50;
+constexpr unsigned long F4 = 100;
+constexpr unsigned long F5 = 500;
+constexpr unsigned long F6 = 1000;
 
-void clean(void *pvParameters);
-void normal(void *pvParameters);
-void taskNetwork(void *pvParameters);
+static void clean(void *pvParameters);
+static void normal(void *pvParameters);
+static void taskNetwork(void *pvParameters);
+static void status();
+static void spiraling(uint8_t circles);
+static void errorBlink();
+static void startTask();
+static void network();
+static void startWifi();
+static bool dirtHigh(uint8_t dirt);
+static bool dirtMed(uint8_t dirt);
+static void spot();
+static void dock();
+static void buttons();
+
 
 void setup() {
 
@@ -134,13 +143,13 @@ void loop() {
 
 // ============================== NETWORK ==================================
 
-void startWifi() {
+static void startWifi() {
     #if USE_AP_MODE
             // Access Point mode
             if (!wifi.beginAP(SSID, PWD)) {
                 Serial.println("ERROR: Failed to create WiFi AP!");
                 errorBlink();
-                while (1) delay(100);
+                while (true) delay(100);
             }
             Serial.println("✓ WiFi AP created!");
         #else
@@ -148,7 +157,7 @@ void startWifi() {
             if (!wifi.beginClient(AP_SSID, PWD)) {
                 Serial.println("ERROR: Failed to connect to WiFi!");
                 errorBlink();
-                while (1) delay(100);
+                while (true) delay(100);
             }
             Serial.println("✓ WiFi connected!");
         #endif
@@ -178,9 +187,7 @@ void startWifi() {
         #endif
 }
 
-void network(){
-  static unsigned long lastCommandTime = 0;
-  static unsigned long lastSafetyCheck = 0;
+static void network(){
 
   wifi.handleClient();
   //ble.updateStatus();
@@ -189,22 +196,17 @@ void network(){
     return;
   }*/
 
-  if (millis() - lastSafetyCheck > 500) {
-    lastSafetyCheck = millis();
-    safetyCheck();
-  }
-
 }
 
 // ============================== TASKS =================================
 
 
-void startTask() {
+static void startTask() {
     xTaskCreatePinnedToCore(
             normal,
             "normal",
             STACK_NORMAL,
-            NULL,
+            nullptr,
             3,
             &xNormal,
             1
@@ -213,7 +215,7 @@ void startTask() {
             taskNetwork,
             "network",
             STACK_NETWORK,
-            NULL,
+            nullptr,
             3,
             &xNetwork,
             0
@@ -221,7 +223,7 @@ void startTask() {
 }
 
 void normal(void* pvParameters) {
-    TickType_t xFrequency = pdMS_TO_TICKS(1);
+    constexpr TickType_t xFrequency = pdMS_TO_TICKS(1);
     TickType_t xLastWakeTime = xTaskGetTickCount();
 
     unsigned long lastF1 = 0, lastF2 = 0, lastF3 = 0;
@@ -229,7 +231,7 @@ void normal(void* pvParameters) {
 
     for (;;) {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        unsigned long time = millis();
+        const unsigned long time = millis();
 
         if (time - lastF1 >= F1) {
         lastF1 = time;
@@ -249,15 +251,15 @@ void normal(void* pvParameters) {
 }
 
 
-void deleteTask(TaskHandle_t& task) {
-    if (task != NULL) {
+static void deleteTask(TaskHandle_t& task) {
+    if (task != nullptr) {
         vTaskDelete(task);
-        task = NULL;
+        task = nullptr;
     }
 }
 
 void taskNetwork(void *pvParameters) {
-    TickType_t xFrequency = pdMS_TO_TICKS(NETWORK_RATE);
+    constexpr TickType_t xFrequency = pdMS_TO_TICKS(NETWORK_RATE);
     TickType_t xLastWakeTime = xTaskGetTickCount();
 
     for (;;) {
@@ -266,21 +268,21 @@ void taskNetwork(void *pvParameters) {
     }
 }
 
-void switchClean() {
+static void switchClean() {
     deleteTask(xNormal);
     xTaskCreatePinnedToCore(
         clean,
         "clean",
         STACK_CLEAN,
-        NULL,
+        nullptr,
         3,
         &xClean,
         1
     );
 }
 
-void buttons() {
-    ButtonData buttons = roomba.sensors().readButtons();
+static void buttons() {
+    const ButtonData buttons = roomba.sensors().readButtons();
     if (buttons.clean){
         switchClean();
         clean();
@@ -293,16 +295,16 @@ void buttons() {
     }
 }
 
-void spot() {
+static void spot() {
     return;
 }
 
-void dock() {
+static void dock() {
     return;
 }
 
-void clean(void* pvParamenters) {
-    TickType_t xFrequency = pdMS_TO_TICKS(1);
+void clean(void* pvParameters) {
+    constexpr TickType_t xFrequency = pdMS_TO_TICKS(1);
     TickType_t xLastWakeTime = xTaskGetTickCount();
 
     unsigned long lastF1 = 0, lastF2 = 0, lastF3 = 0;
@@ -311,7 +313,7 @@ void clean(void* pvParamenters) {
 
     for (;;) {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        unsigned long time = millis();
+        const unsigned long time = millis();
 
         if (time - lastF1 >= F1) {
         lastF1 = time;
@@ -347,7 +349,7 @@ void clean(void* pvParamenters) {
 
 // ============================= CLEAN ========================================
 
-void collision(bool walling = false){ // TODO add IR and finish collision system
+static void collision(bool walling = false){ // TODO add IR and finish collision system
     if (roomba.isConnected() ) {
         if (roomba.isWallDetected(true) ) {
           roomba.moveForward(SPEED_BEFORE_HIT);
@@ -362,14 +364,14 @@ void collision(bool walling = false){ // TODO add IR and finish collision system
     }
 }
 
-void clean(){
+static void clean(){
   if(roomba.isConnected()){
     spiraling(SPIRAL_MEDIUM);
     forward();
   }
 }
 
-void forward(){
+static void forward(){
   unsigned long last = millis();
 
   roomba.moveForward(NORMAL_SPEED);
@@ -380,7 +382,7 @@ void forward(){
   }
 }
 
-void spiraling(uint8_t circles){
+static void spiraling(uint8_t circles){
     uint8_t radius = RAD_START;
     uint8_t speed = SPIRAL_SPEED;
     uint8_t delay = SPIRAL_DELAY;
@@ -401,19 +403,19 @@ void spiraling(uint8_t circles){
     
 }
 
-bool dirtMed(uint8_t dirt){
+static bool dirtMed(const uint8_t dirt){
   return (dirt > DIRT_MEDIUM) ? true : false;
 }
 
-bool dirtHigh(uint8_t dirt){
+static bool dirtHigh(const uint8_t dirt){
   return (dirt > DIRT_HIGH) ? true : false;
 }
 
 // ================================ SAFETY =========================
 
-void safetyCheck() {
+static void safetyCheck() {
   // Check battery status
-  uint16_t voltage = roomba.getBatteryVoltage();
+  const uint16_t voltage = roomba.getBatteryVoltage();
   static bool wasLow = false;
 
   if (voltage > 0 && voltage < 12000) {
@@ -455,7 +457,7 @@ void safetyCheck() {
 
 // =========================== DEBUG =====================================
 
-void errorBlink() {
+static void errorBlink() {
   while (true) {
     digitalWrite(LED_PIN, HIGH);
     delay(100);
@@ -464,7 +466,7 @@ void errorBlink() {
   }
 }
 
-void status(){
+static void status(){
   Serial.println("\n--- Status ---");
   Serial.print("BLE Connected: ");
   //Serial.println(ble.isConnected() ? "Yes" : "No");
