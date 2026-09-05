@@ -2,7 +2,12 @@
 #ifndef MAP_H
 #define MAP_H
 #include <vector>
+#include <set>
+#include <map>
+#include "ArduRoomba.h"
 #include <Arduino.h>
+
+#define NORMAL_SPEED = 300
 
 using namespace std;
 
@@ -33,11 +38,12 @@ class mapRoom {
 
   private:
     vector<uint8_t> map;
+    ArduRoomba roomba;
     short height;
     short width;
 
   public:
-    mapRoom(short h, short w) : height(h), width(w) {
+    mapRoom(Arduroomba roomba, short h, short w) : roomba(roomba), height(h), width(w) {
       map.assign(height * width, UNKNOWN);
     }
 
@@ -77,6 +83,10 @@ class mapRoom {
       return (const T&)map[r * width + c]; 
     }
 
+    void start() {
+      roomba.moveForward();
+    }
+
 
     // utility funcs
     short getRows() const { return height; }
@@ -94,6 +104,7 @@ class mapRoom {
       else if (check(x, y - 1)) return DOWN;
       else return STOP;
     }
+
 
     // debug print
     void print() {
