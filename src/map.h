@@ -2,12 +2,13 @@
 #ifndef MAP_H
 #define MAP_H
 #include <vector>
-#include <set>
 #include <map>
 #include "ArduRoomba.h"
 #include <Arduino.h>
 
-#define NORMAL_SPEED = 300
+constexpr uint8_t NORMAL_SPEED = 300;
+constexpr uint8_t TURN_SPEED = 200;
+constexpr short OI_WEIGHT = 60;
 
 using namespace std;
 
@@ -43,7 +44,7 @@ class mapRoom {
     short width;
 
   public:
-    mapRoom(Arduroomba roomba, short h, short w) : roomba(roomba), height(h), width(w) {
+    mapRoom(const ArduRoomba &roomba, const short h, const short w) : roomba(roomba), height(h), width(w) {
       map.assign(height * width, UNKNOWN);
     }
 
@@ -76,15 +77,34 @@ class mapRoom {
     }
 
     T& operator()(short r, short c) { 
-      return (T&)map[r * width + c]; 
+      return static_cast<T &>(map[r * width + c]);
     }
 
-    const T& operator()(short r, short c) const { 
-      return (const T&)map[r * width + c]; 
+    const T& operator()(const short r,const short c) const {
+      return static_cast<const T &>(map[r * width + c]);
+    }
+
+    short mergeDistance(const short OIvalue, const short computed) {
+      const short sum = (OIvalue * OI_WEIGHT) + (computed * ( 100 - OI_WEIGHT ));
+      return sum / 100;
     }
 
     void start() {
-      roomba.moveForward();
+      const unsigned long startTime = millis();
+      roomba.moveForward(NORMAL_SPEED);
+      if (collision()) {
+        const unsigned long time = millis() - startTime;
+        short distance = mergeDistance(roomba.getDistance(), time);
+      }
+
+    }
+
+    bool collision() {
+      const BumperData bumpers = roomba.sensors().readBumpers();
+      if (bumpers.leftBumper) {
+        roomba.stop();
+        roomba.turnLeft(TURN_SPEED);
+      }
     }
 
 
@@ -92,12 +112,12 @@ class mapRoom {
     short getRows() const { return height; }
     short getColumns() const { return width; }
 
-    bool check(short nx, short ny, bool countPassed = false) {
-      uint8_t cell = readCell(nx, ny);
+    bool check(const short nx, const short ny, const bool countPassed = false) const {
+      const uint8_t cell = readCell(nx, ny);
       return (cell == FREE) || (countPassed && cell == FREE);
     }
 
-    directions getDirection(short x, short y, bool countPassed = false) {
+    directions getDirection(const short x, const short y, bool countPassed = false) const {
       if (check(x + 1, y)) return RIGHT;
       else if (check(x - 1, y)) return LEFT;
       else if (check(x, y + 1)) return UP;
@@ -107,7 +127,7 @@ class mapRoom {
 
 
     // debug print
-    void print() {
+    void print() const {
       for (short y = 0; y < height; ++y) {
         for (short x = 0; x < width; ++x) {
           uint8_t status = readCell(x, y);

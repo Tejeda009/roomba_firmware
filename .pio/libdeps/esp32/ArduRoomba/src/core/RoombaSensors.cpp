@@ -157,6 +157,26 @@ BatteryData RoombaSensors::readBattery() {
   return data;
 }
 
+short RoombaSensors::readDistance() {
+  uint8_t bytes[2];
+  int16_t distance = 0;
+  if (getSensor(SENSOR_DISTANCE, bytes, 2)) {
+    distance = static_cast<int16_t>(((bytes[0] << 8) | bytes[1]);
+  }
+
+  return distance;
+}
+
+short RoombaSensors::readAngle() {
+  uint8_t bytes[2];
+  int16_t angle = 0;
+  if (getSensor(SENSOR_ANGLE, bytes, 2)) {
+    angle = static_cast<int16_t>(((bytes[0] << 8) | bytes[1]);
+  }
+
+  return angle;
+}
+
 bool RoombaSensors::isBumperPressed() {
   BumperData b = readBumpers();
   return b.anyBumper();
@@ -174,6 +194,14 @@ bool RoombaSensors::isWallDetected(bool quick) {
 bool RoombaSensors::isCliffDetected() {
   CliffData c = readCliffs();
   return c.anyCliff();
+}
+
+short RoombaSensors::getDistance() {
+  return readDistance();
+}
+
+short RoombaSensors::getAngle() {
+  return readAngle();
 }
 
 uint16_t RoombaSensors::getBatteryVoltage() {

@@ -137,6 +137,8 @@ public:
   void spinRight(int16_t speed = 200) { _movement->spinRight(speed); }
 
   // Quick access to sensor readings
+  short getDistance() { return _sensors->getDistance(); }
+  short getAngle() { return _sensors->getAngle(); }
   uint16_t getBatteryVoltage() { return _sensors->getBatteryVoltage(); }
   int16_t getBatteryCurrent() { return _sensors->getBatteryCurrent(); }
   uint8_t getBatteryPercent() { return _sensors->getBatteryPercent(); }

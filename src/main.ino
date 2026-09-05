@@ -8,21 +8,21 @@
 
 using namespace std;
 
-// TODO remove overcurrent in updateSafety and use it to check if it found a small obstacle
-// TODO remove bumper detection in updateSafety and fix cliff detection
-// TODO implement mapping to show on a canvas in the web server with Spanning Tree Coverage
-// TODO implement simple path finding to improve dock function (WaveFront alg)
-// TODO implement dock and spot function
-// TODO se dopo tot tempo non trova la base fermati e fai una melodia
-// TODO se trovi dirt detect allora guarda intorno e vedi se ne trovi altro
-// TODO fotoresistenze per non fermarsi sotto i divani
-// TODO IR receiver/transmitter per individuare ostacoli
-// TODO PID per controllo direzione (magari anche con MPU-608)
-// TODO analisi euristica dei punti sporchi
-// TODO STEALTH mode
-// TODO sensore di suono per attivazione remota
-// TODO LittleFS library for saving and loading the maps
-// TODO timer con priorità tramite FreeRTOS per le varie task 
+// TODO: remove overcurrent in updateSafety and use it to check if it found a small obstacle
+// TODO: remove bumper detection in updateSafety and fix cliff detection
+// TODO: implement mapping to show on a canvas in the web server with Spanning Tree Coverage
+// TODO: implement simple path finding to improve dock function (WaveFront alg)
+// TODO: implement dock and spot function
+// TODO: se dopo tot tempo non trova la base fermati e fai una melodia
+// TODO: se trovi dirt detect allora guarda intorno e vedi se ne trovi altro
+// TODO: fotoresistenze per non fermarsi sotto i divani
+// TODO: IR receiver/transmitter per individuare ostacoli
+// TODO: PID per controllo direzione (magari anche con MPU-608)
+// TODO: analisi euristica dei punti sporchi
+// TODO: STEALTH mode
+// TODO: sensore di suono per attivazione remota
+// TODO: LittleFS library for saving and loading the maps
+// TODO: timer con priorità tramite FreeRTOS per le varie task
 // /TODO add BLE ???
 
 #define NETWORK_RATE 20

@@ -6,16 +6,16 @@
 using namespace std;
 
 // Mapping
-#define RESOLUTION 10 // cm for map
+constexpr uint8_t RESOLUTION = 10; // cm for map
 
-const uint8_t START_MARK = 28; // 281 is too big
-const short dx[] = {1, -1, 0, 0};
-const short dy[] = {0, 0, -1, 1};
+constexpr uint8_t START_MARK = 28; // 281 is too big
+constexpr short dx[4] = {1, -1, 0, 0};
+constexpr short dy[4] = {0, 0, -1, 1};
 
 
-vector<Point> findPath(const mapRoom<uint8_t>& map, Point start, Point end) {
-  short width = map.getColumns();
-  short height = map.getRows();
+vector<Point> findPath(const mapRoom<uint8_t>& map, const Point start, const Point end) {
+  const short width = map.getColumns();
+  const short height = map.getRows();
 
   vector<uint8_t> from(width * height, UNKNOWN);
 
@@ -40,8 +40,8 @@ vector<Point> findPath(const mapRoom<uint8_t>& map, Point start, Point end) {
       short ny = curr.y + dy[i];
 
       if (nx >= 0 && nx < width && ny >= 0 && ny < height ) {
-        int index = ny * width + nx;
-        uint8_t status = map.readCell(nx, ny); 
+        const int index = ny * width + nx;
+        const uint8_t status = map.readCell(nx, ny);
 
         if (from[index] == 255 && (status == FREE || status == DIRT || status == PASSED)) {
           from[index] = i;
@@ -58,7 +58,7 @@ vector<Point> findPath(const mapRoom<uint8_t>& map, Point start, Point end) {
 
   while(!(curr == start)) {
     path.push_back(curr);
-    uint8_t dir = from[curr.y * width + curr.x];
+    const uint8_t dir = from[curr.y * width + curr.x];
     curr.x -= dx[dir];
     curr.y -= dy[dir];
   }

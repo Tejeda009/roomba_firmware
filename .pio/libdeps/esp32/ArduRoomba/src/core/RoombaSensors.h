@@ -137,12 +137,16 @@ public:
   MovementData readMovement();
   BatteryData readBattery();
   OvercurrentData readCurrent(bool quick);
+  short readDistance();
+  short readAngle();
   uint8_t readDirt();
 
   // Individual convenience methods
   bool isBumperPressed();
   bool isWallDetected(bool quick);
   bool isCliffDetected();
+  short getDistance();
+  short getAngle();
   uint8_t getDirt();
   uint16_t getBatteryVoltage();
   int16_t getBatteryCurrent();
