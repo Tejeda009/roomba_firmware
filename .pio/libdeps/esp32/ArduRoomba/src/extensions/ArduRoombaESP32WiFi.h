@@ -22,6 +22,8 @@ public:
   ArduRoombaESP32WiFi(ArduRoomba& roomba);
   ~ArduRoombaESP32WiFi();
 
+  WebServer* getServer() { return _server; }
+
   // WiFi setup
   bool beginAP(const char* ssid, const char* password = nullptr) override;
   bool beginClient(const char* ssid, const char* password) override;

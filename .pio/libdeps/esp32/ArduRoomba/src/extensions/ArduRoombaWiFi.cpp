@@ -91,127 +91,151 @@ String ArduRoombaWiFi::generateControlPage() {
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ArduRoomba Control</title>
+  <title>ArduRoomba Control & Map</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: -apple-system, sans-serif;
       text-align: center;
       background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
       color: #fff;
-      padding: 20px;
-      min-height: 100vh;
+      padding: 10px;
     }
-    h1 { margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-    .container { max-width: 400px; margin: 0 auto; }
-    .status {
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      padding: 15px;
-      margin-bottom: 20px;
+    .container { max-width: 500px; margin: 0 auto; }
+    
+    /* Stili per il Canvas della Mappa */
+    .map-container {
+      background: #2c3e50; /* Colore UNKNOWN di default */
+      border-radius: 8px;
+      padding: 5px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      overflow: hidden;
     }
-    .status-item { display: flex; justify-content: space-between; margin: 5px 0; }
-    .status-label { opacity: 0.8; }
-    .status-value { font-weight: bold; }
-    .controls {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    button {
-      padding: 20px;
-      font-size: 24px;
-      background: rgba(255,255,255,0.2);
-      border: none;
-      border-radius: 12px;
-      color: white;
-      cursor: pointer;
-      transition: all 0.2s;
-      backdrop-filter: blur(5px);
-    }
-    button:hover { background: rgba(255,255,255,0.3); transform: scale(1.05); }
-    button:active { transform: scale(0.95); }
-    .forward { grid-column: 2; }
-    .left { grid-column: 1; grid-row: 2; }
-    .stop {
-      grid-column: 2; grid-row: 2;
-      background: rgba(231, 76, 60, 0.8) !important;
-      font-size: 18px;
-      font-weight: bold;
-    }
-    .right { grid-column: 3; grid-row: 2; }
-    .backward { grid-column: 2; grid-row: 3; }
-    .spin-left { grid-column: 1; grid-row: 3; font-size: 14px; }
-    .spin-right { grid-column: 3; grid-row: 3; font-size: 14px; }
-    .actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-    .actions button {
-      padding: 12px 20px;
-      font-size: 14px;
-      background: rgba(39, 174, 96, 0.8);
-    }
-    .slider-container {
-      background: rgba(255,255,255,0.1);
-      border-radius: 12px;
-      padding: 15px;
-      margin-bottom: 20px;
-    }
-    input[type=range] {
+    canvas {
       width: 100%;
-      height: 8px;
-      border-radius: 4px;
-      background: rgba(255,255,255,0.3);
-      outline: none;
+      height: auto;
+      background-color: #34495e; /* Grigio scuro per nebbia di guerra */
+      display: block;
+      image-rendering: pixelated; /* Mantiene nitidi i pixel della mappa */
     }
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      font-size: 12px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .legend span { display: flex; align-items: center; gap: 4px; }
+    .color-box { width: 12px; height: 12px; border-radius: 2px; }
+
+    /* Controlli UI (esistenti ma ottimizzati) */
+    .status { background: rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; margin-bottom: 15px; }
+    .status-item { display: flex; justify-content: space-between; margin: 5px 0; }
+    .controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 15px; }
+    button { padding: 15px; font-size: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 8px; color: white; cursor: pointer; }
+    button:hover { background: rgba(255,255,255,0.3); }
+    .stop { background: rgba(231, 76, 60, 0.8) !important; font-size: 16px; font-weight: bold; }
+    .actions { display: flex; gap: 5px; justify-content: center; }
+    .actions button { padding: 10px; font-size: 14px; background: rgba(39, 174, 96, 0.8); flex: 1; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🤖 ArduRoomba</h1>
+    
+    <!-- CANVAS DELLA MAPPA -->
+    <div class="map-container">
+      <canvas id="mapCanvas" width="300" height="300"></canvas>
+    </div>
+    
+    <!-- LEGENDA MAPPA -->
+    <div class="legend">
+      <span><div class="color-box" style="background:#ecf0f1"></div> Libero</span>
+      <span><div class="color-box" style="background:#e74c3c"></div> Ostacolo</span>
+      <span><div class="color-box" style="background:#8e44ad"></div> Sporco</span>
+      <span><div class="color-box" style="background:#3498db"></div> Passato</span>
+      <span>🤖 Robot</span>
+    </div>
+
     <div class="status">
-      <div class="status-item">
-        <span class="status-label">Battery</span>
-        <span class="status-value" id="voltage">-- mV</span>
-      </div>
-      <div class="status-item">
-        <span class="status-label">Status</span>
-        <span class="status-value" id="status">Connected</span>
-      </div>
+      <div class="status-item"><span>Battery:</span><span id="voltage">-- mV</span></div>
+      <div class="status-item"><span>Status:</span><span id="status">Connecting...</span></div>
     </div>
-    <div class="slider-container">
-      <label>Speed: <span id="speedValue">200</span> mm/s</label>
-      <input type="range" id="speed" min="0" max="500" value="200">
-    </div>
+    
     <div class="controls">
-      <button class="forward" onclick="send('forward')">▲</button>
-      <button class="left" onclick="send('left')">◀</button>
+      <button onclick="send('spinLeft')">↺</button>
+      <button onclick="send('forward')">▲</button>
+      <button onclick="send('spinRight')">↻</button>
+      <button onclick="send('left')">◀</button>
       <button class="stop" onclick="send('stop')">⏹</button>
-      <button class="right" onclick="send('right')">▶</button>
-      <button class="backward" onclick="send('backward')">▼</button>
-      <button class="spin-left" onclick="send('spinLeft')">↺</button>
-      <button class="spin-right" onclick="send('spinRight')">↻</button>
+      <button onclick="send('right')">▶</button>
+      <div></div>
+      <button onclick="send('backward')">▼</button>
+      <div></div>
     </div>
     <div class="actions">
       <button onclick="send('clean')">🧹 Clean</button>
       <button onclick="send('spot')">⚡ Spot</button>
       <button onclick="send('dock')">🏠 Dock</button>
-      <button onclick="send('beep')">🔔 Beep</button>
     </div>
   </div>
+
   <script>
-    let currentSpeed = 200;
+    // --- MAP DRAWING LOGIC ---
+    const canvas = document.getElementById('mapCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Mappatura colori in base all'enum cellStatus di C++
+    const colors = {
+      1: '#ecf0f1', // FREE (Bianco)
+      2: '#e74c3c', // OBSTACLE (Rosso)
+      3: '#8e44ad', // DIRT (Viola)
+      4: '#3498db'  // PASSED (Azzurro)
+    };
 
-    document.getElementById('speed').addEventListener('input', function(e) {
-      currentSpeed = e.target.value;
-      document.getElementById('speedValue').textContent = currentSpeed;
-    });
+    function drawMap(data) {
+      if (!data || !data.w) return;
+      
+      // Assicurati che il canvas abbia le proporzioni giuste
+      if (canvas.width !== data.w) canvas.width = data.w;
+      if (canvas.height !== data.h) canvas.height = data.h;
+      
+      const cellW = 1; // 1 pixel per cella (viene poi scalato dal CSS)
+      const cellH = 1;
 
+      // Svuota tutto mettendo il colore di default (UNKNOWN)
+      ctx.fillStyle = '#34495e';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Disegna solo le celle conosciute
+      data.cells.forEach(cell => {
+        const x = cell[0];
+        const y = cell[1];
+        const state = cell[2];
+        ctx.fillStyle = colors[state] || '#34495e';
+        ctx.fillRect(x, y, cellW, cellH);
+      });
+
+      // Disegna il Robot (un pallino giallo/verde per spiccare)
+      ctx.fillStyle = '#f1c40f';
+      ctx.beginPath();
+      // Disegna un cerchio leggermente più grande di un pixel per vederlo
+      ctx.arc(data.cx, data.cy, 2, 0, 2 * Math.PI); 
+      ctx.fill();
+    }
+
+    function fetchMap() {
+      fetch('/map')
+        .then(r => r.json())
+        .then(data => drawMap(data))
+        .catch(e => console.error("Map Error:", e));
+    }
+
+    // --- CONTROLS LOGIC ---
     function send(action) {
-      fetch('/cmd?action=' + action + '&speed=' + currentSpeed)
-        .then(r => r.text())
-        .then(t => console.log(t))
-        .catch(e => console.error(e));
+      fetch('/cmd?action=' + action + '&speed=200').catch(e => console.error(e));
     }
 
     function updateStatus() {
@@ -220,21 +244,18 @@ String ArduRoombaWiFi::generateControlPage() {
         .then(d => {
           document.getElementById('voltage').textContent = d.voltage + ' mV';
           const statusEl = document.getElementById('status');
-          if (d.voltage < 13000) {
-            statusEl.textContent = '⚠️ Low Battery';
-            statusEl.style.color = '#f1c40f';
-          } else if (d.bumper) {
-            statusEl.textContent = '⚠️ Bumper Hit';
-            statusEl.style.color = '#e74c3c';
-          } else {
-            statusEl.textContent = '✓ Ready';
-            statusEl.style.color = '#2ecc71';
-          }
-        })
-        .catch(e => console.error(e));
+          if (d.voltage < 13000) { statusEl.textContent = '⚠️ Low Battery'; statusEl.style.color = '#f1c40f'; } 
+          else if (d.bumper) { statusEl.textContent = '⚠️ Bumper Hit'; statusEl.style.color = '#e74c3c'; } 
+          else { statusEl.textContent = '✓ Ready'; statusEl.style.color = '#2ecc71'; }
+        }).catch(e => console.error(e));
     }
 
+    // Aggiornamenti periodici (Mappa ogni 1.5s, Status ogni 2s)
+    setInterval(fetchMap, 1500);
     setInterval(updateStatus, 2000);
+    
+    // Prima esecuzione
+    fetchMap();
     updateStatus();
   </script>
 </body>

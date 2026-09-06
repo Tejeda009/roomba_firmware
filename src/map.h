@@ -288,6 +288,27 @@ class mapRoom {
       }
     }
 
+    String getMapJSON() const {
+      // Ottimizzazione memoria: inviamo solo le celle conosciute
+      String json = "{\"w\":" + String(width) + ",\"h\":" + String(height) + 
+                    ",\"cx\":" + String(curr.x) + ",\"cy\":" + String(curr.y) + ",\"cells\":[";
+      
+      bool first = true;
+      for (short y = 0; y < height; ++y) {
+        for (short x = 0; x < width; ++x) {
+          uint8_t status = readCell(x, y);
+          if (status != UNKNOWN) {
+            if (!first) json += ",";
+            // Formato compatto: [x, y, stato]
+            json += "[" + String(x) + "," + String(y) + "," + String(status) + "]";
+            first = false;
+          }
+        }
+      }
+      json += "]}";
+      return json;
+    }
+
 };
 
 vector<Point> findPath(const mapRoom<>& map, Point start, Point end);

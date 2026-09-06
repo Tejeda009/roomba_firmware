@@ -26,8 +26,9 @@ using namespace std;
 // /TODO add BLE ???
 
 #define NETWORK_RATE 20
-#define USE_AP_MODE false
+#define USE_AP_MODE true
 #define AP_SSID "MY-WIFI-LTE"
+#define SSID "Roomba"
 #define PWD "Qwert128mz"
 #define LOW_BATT 14000
 #define CRITICAL_BATT 13000 // standard for LiPO
@@ -77,6 +78,8 @@ TaskHandle_t static xNormal = nullptr;
 TaskHandle_t static xClean = nullptr;
 TaskHandle_t static xNetwork = nullptr;
 
+mapRoom<> Map(roomba, HEIGHT, WIDTH);
+
 constexpr unsigned long F1 = 10;
 constexpr unsigned long F2 = 20;
 constexpr unsigned long F3 = 50;
@@ -114,10 +117,10 @@ void setup() {
     config.enableSafety = true;
 
     // Inizializzazione della libreria Roomba
-    roomba.setDebug(true);
     roomba.enableSafety(true);
 
     if(roomba.begin(115200)){
+        roomba.setDebug(true);
         startWifi();
 
 
@@ -188,6 +191,16 @@ static void startWifi() {
             Serial.print(wifi.getRSSI());
             Serial.println(" dBm");
         #endif
+
+        wifi.getServer()->on("/map", HTTP_GET, []() {
+    
+    // Richiama la funzione (che hai aggiunto in map.h) per ottenere il JSON
+        String json = Map.getMapJSON(); 
+        
+        // Invia la risposta al browser
+        wifi.getServer()->sendHeader("Access-Control-Allow-Origin", "*");
+        wifi.getServer()->send(200, "application/json", json);
+  });
 }
 
 static void network(){
@@ -313,8 +326,7 @@ void clean(void* pvParameters) {
     unsigned long lastF1 = 0, lastF2 = 0, lastF3 = 0;
     unsigned long lastF4 = 0, lastF5 = 0, lastF6 = 0;
 
-    mapRoom<> map(roomba, HEIGHT, WIDTH);
-    map.start();
+    Map.start();
 
 
     for (;;) {
@@ -333,7 +345,7 @@ void clean(void* pvParameters) {
 
         if (time - lastF3 >= F3) {
         lastF3 = time;
-            map.clean();
+            Map.clean();
         }
 
         if (time - lastF4 >= F4) {
