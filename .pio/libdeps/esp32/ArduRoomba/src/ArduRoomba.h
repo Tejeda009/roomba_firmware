@@ -40,8 +40,8 @@ struct RoombaConfig {
   bool enableSafety;       // Enable automatic safety features
 
   // Default configuration for software serial
-  static RoombaConfig createDefault(uint8_t rx = 2, uint8_t tx = 3, uint8_t brc = 4) {
-    RoombaConfig config;
+  static RoombaConfig createDefault(const uint8_t rx = 2, const uint8_t tx = 3, const uint8_t brc = 4) {
+    RoombaConfig config{};
     config.rxPin = rx;
     config.txPin = tx;
     config.brcPin = brc;
@@ -56,8 +56,8 @@ struct RoombaConfig {
 
   #if defined(ESP32)
   // Configuration for ESP32 with hardware serial (Serial2 by default)
-  static RoombaConfig createESP32(HardwareSerial* serial = &Serial2, uint8_t brc = 5) {
-    RoombaConfig config;
+  static RoombaConfig createESP32(HardwareSerial* serial = &Serial2, const uint8_t brc = 5) {
+    RoombaConfig config{};
     config.rxPin = 16;  // Default ESP32 RX2
     config.txPin = 17;  // Default ESP32 TX2
     config.brcPin = brc;
@@ -112,7 +112,8 @@ class ArduRoomba {
 public:
   // Constructor with pin configuration
   ArduRoomba(uint8_t rxPin, uint8_t txPin, uint8_t brcPin);
-  ArduRoomba(const RoombaConfig& config);
+
+  explicit ArduRoomba(const RoombaConfig& config);
 
   // Destructor
   ~ArduRoomba();
@@ -122,55 +123,55 @@ public:
   bool isConnected() const { return _connected; }
 
   // Component access
-  RoombaSensors& sensors() { return *_sensors; }
-  RoombaMovement& movement() { return *_movement; }
-  RoombaActuators& actuators() { return *_actuators; }
-  RoombaSerial* serial() { return _serial; }
+  RoombaSensors& sensors() const { return *_sensors; }
+  RoombaMovement& movement() const { return *_movement; }
+  RoombaActuators& actuators() const { return *_actuators; }
+  RoombaSerial* serial() const { return _serial; }
 
   // Quick access to common movement commands
-  void stop() { _movement->stop(); }
-  void moveForward(int16_t speed = 200) { _movement->moveForward(speed); }
-  void moveBackward(int16_t speed = 200) { _movement->moveBackward(speed); }
-  void turnLeft(int16_t speed = 200) { _movement->turnLeft(speed); }
-  void turnRight(int16_t speed = 200) { _movement->turnRight(speed); }
-  void spinLeft(int16_t speed = 200) { _movement->spinLeft(speed); }
-  void spinRight(int16_t speed = 200) { _movement->spinRight(speed); }
+  void stop() const { _movement->stop(); }
+  void moveForward(const int16_t speed = 200) const { _movement->moveForward(speed); }
+  void moveBackward(const int16_t speed = 200) const { _movement->moveBackward(speed); }
+  void turnLeft(const int16_t speed = 200) const { _movement->turnLeft(speed); }
+  void turnRight(const int16_t speed = 200) const { _movement->turnRight(speed); }
+  void spinLeft(const int16_t speed = 200) const { _movement->spinLeft(speed); }
+  void spinRight(const int16_t speed = 200) const { _movement->spinRight(speed); }
 
   // Quick access to sensor readings
-  short getDistance() { return _sensors->getDistance(); }
-  short getAngle() { return _sensors->getAngle(); }
-  uint16_t getBatteryVoltage() { return _sensors->getBatteryVoltage(); }
-  int16_t getBatteryCurrent() { return _sensors->getBatteryCurrent(); }
-  uint8_t getBatteryPercent() { return _sensors->getBatteryPercent(); }
-  bool isBatteryLow() { return _sensors->isBatteryLow(); }
-  bool isBatteryCritical() { return _sensors->isBatteryCritical(); }
-  bool isBumperPressed() { return _sensors->isBumperPressed(); }
-  BumperData readBumpers() { return _sensors->readBumpers(); }
-  bool isWallDetected(bool quick) { return _sensors->isWallDetected(quick); }
-  bool isCliffDetected() { return _sensors->isCliffDetected(); }
-  uint8_t getDirt() { return _sensors->getDirt(); }
-  bool isObstacle() { return _sensors->isObstacle(); }
+  short getDistance() const { return _sensors->getDistance(); }
+  short getAngle() const { return _sensors->getAngle(); }
+  uint16_t getBatteryVoltage() const { return _sensors->getBatteryVoltage(); }
+  int16_t getBatteryCurrent() const { return _sensors->getBatteryCurrent(); }
+  uint8_t getBatteryPercent() const { return _sensors->getBatteryPercent(); }
+  bool isBatteryLow() const { return _sensors->isBatteryLow(); }
+  bool isBatteryCritical() const{ return _sensors->isBatteryCritical(); }
+  bool isBumperPressed() const { return _sensors->isBumperPressed(); }
+  BumperData readBumpers() const { return _sensors->readBumpers(); }
+  bool isWallDetected(const bool quick) const { return _sensors->isWallDetected(quick); }
+  bool isCliffDetected() const { return _sensors->isCliffDetected(); }
+  uint8_t getDirt() const { return _sensors->getDirt(); }
+  bool isObstacle() const { return _sensors->isObstacle(); }
 
   // Quick access to actuator control
-  void setLED(bool debris, bool spot, bool dock, bool checkRobot) {
+  void setLED(const bool debris, const bool spot, const bool dock, const bool checkRobot) const {
     _actuators->setLED(debris, spot, dock, checkRobot);
   }
-  void setPowerLED(uint8_t color, uint8_t intensity = 255) {
+  void setPowerLED(const uint8_t color, const uint8_t intensity = 255) const {
     _actuators->setPowerLED(color, intensity);
   }
-  void setMotors(bool mainBrush, bool sideBrush, bool vacuum) {
+  void setMotors(const bool mainBrush, const bool sideBrush, const bool vacuum) const {
     _actuators->setMotors(mainBrush, sideBrush, vacuum);
   }
-  void beep() { _actuators->beep(); }
+  void beep() const { _actuators->beep(); }
 
   // Cleaning modes
-  void startCleaning() { _actuators->startCleaning(); }
-  void spotClean() { _actuators->startSpotClean(); }
-  void dock() { _actuators->seekDock(); }
+  void startCleaning() const { _actuators->startCleaning(); }
+  void spotClean() const { _actuators->startSpotClean(); }
+  void dock() const { _actuators->seekDock(); }
 
   // Mode control
-  void setSafeMode() { _actuators->setSafeMode(); }
-  void setFullMode() { _actuators->setFullMode(); }
+  void setSafeMode() const { _actuators->setSafeMode(); }
+  void setFullMode() const { _actuators->setFullMode(); }
 
   // Configuration
   const RoombaConfig& getConfig() const { return _config; }
@@ -181,7 +182,7 @@ public:
   bool isDebug() const { return _debug; }
 
   // Safety features
-  void enableSafety(bool enable) { _config.enableSafety = enable; }
+  void enableSafety(const bool enable) { _config.enableSafety = enable; }
   bool isSafetyEnabled() const { return _config.enableSafety; }
   void updateSafety(); // Call in loop() for automatic safety features
 
@@ -214,42 +215,42 @@ public:
   explicit RoombaOI_Legacy(ArduRoomba* parent) : _parent(parent) {}
 
   // Legacy methods mapped to new architecture
-  void drive(int16_t velocity, int16_t radius) {
+  void drive(const int16_t velocity, const int16_t radius) const {
     _parent->_movement->drive(velocity, radius);
   }
 
-  void driveDirect(int16_t rightVel, int16_t leftVel) {
+  void driveDirect(const int16_t rightVel, const int16_t leftVel) const {
     _parent->_movement->driveDirect(rightVel, leftVel);
   }
 
-  void stop() { _parent->_movement->stop(); }
+  void stop() const { _parent->_movement->stop(); }
 
-  void setMotors(bool mainBrush, bool sideBrush, bool vacuum) {
+  void setMotors(const bool mainBrush, const bool sideBrush, const bool vacuum) const {
     _parent->_actuators->setMotors(mainBrush, sideBrush, vacuum);
   }
 
-  void setLEDs(uint8_t ledBits, uint8_t powerColor, uint8_t powerIntensity) {
+  void setLEDs(const uint8_t ledBits, const uint8_t powerColor, const uint8_t powerIntensity) const {
     _parent->_actuators->setAllLEDs(ledBits, powerColor, powerIntensity);
   }
 
-  uint16_t getBatteryVoltage() { return _parent->_sensors->getBatteryVoltage(); }
-  int16_t getBatteryCurrent() { return _parent->_sensors->getBatteryCurrent(); }
-  bool isWallDetected(bool quick) { return _parent->_sensors->isWallDetected(quick); }
-  bool isBumperPressed() { return _parent->_sensors->isBumperPressed(); }
+  uint16_t getBatteryVoltage() const { return _parent->_sensors->getBatteryVoltage(); }
+  int16_t getBatteryCurrent() const { return _parent->_sensors->getBatteryCurrent(); }
+  bool isWallDetected(const bool quick) const { return _parent->_sensors->isWallDetected(quick); }
+  bool isBumperPressed() const { return _parent->_sensors->isBumperPressed(); }
 
-  void setDebug(bool enable) {
+  void setDebug(const bool enable) const {
     _parent->_sensors->setDebug(enable);
     _parent->_movement->setDebug(enable);
     _parent->_actuators->setDebug(enable);
   }
 
-  void sendCommand(uint8_t cmd) {
+  void sendCommand(const uint8_t cmd) const {
     if (_parent->_serial && _parent->_serial->isActive()) {
       _parent->_serial->write(cmd);
     }
   }
 
-  void sendCommand(uint8_t cmd, const uint8_t* params, uint8_t numParams) {
+  void sendCommand(const uint8_t cmd, const uint8_t* params, const uint8_t numParams) const {
     if (_parent->_serial && _parent->_serial->isActive() && params) {
       _parent->_serial->write(cmd);
       _parent->_serial->write(params, numParams);
@@ -261,7 +262,7 @@ private:
 };
 
 // Global sequence builder helper
-inline RoombaSequence RoombaSequenceBuilder(ArduRoomba& roomba) {
+inline RoombaSequence RoombaSequenceBuilder(const ArduRoomba& roomba) {
   return RoombaSequence(&roomba.movement());
 }
 

@@ -19,8 +19,8 @@ uint8_t RoombaSensors::readDirt(){
   return 0;
 }
 
-OvercurrentData RoombaSensors::readCurrent(bool quick = false) {
-  OvercurrentData data = {false, false, false, false, false, false, false, false, false, false};
+OvercurrentData RoombaSensors::readCurrent(const bool quick = false) {
+  OvercurrentData data = {.left = false, .right = false, .mainBrush = false, .vacuum = false, .sideBrush = false, .leftWheel = false, .rightWheel = false, .lowDriver0 = false, .lowDriver1 = false, .lowDriver2 = false};
 
   uint8_t value;
   if (!quick) {
@@ -45,7 +45,7 @@ OvercurrentData RoombaSensors::readCurrent(bool quick = false) {
 }
 
 BumperData RoombaSensors::readBumpers() {
-  BumperData data = {false, false, false, false};
+  BumperData data = {.rightBumper = false, .leftBumper = false, .rightWheelDrop = false, .leftWheelDrop = false};
 
   uint8_t value;
   if (getSensor(SENSOR_BUMPS_DROPS, &value, 1)) {
@@ -59,7 +59,7 @@ BumperData RoombaSensors::readBumpers() {
 }
 
 CliffData RoombaSensors::readCliffs() {
-  CliffData data = {false, false, false, false};
+  CliffData data = {.left = false, .frontLeft = false, .frontRight = false, .right = false};
 
   uint8_t cliffs[4];
   if (getSensor(SENSOR_CLIFF_LEFT, &cliffs[0], 1)) data.left = cliffs[0] != 0;
@@ -70,8 +70,8 @@ CliffData RoombaSensors::readCliffs() {
   return data;
 }
 
-WallData RoombaSensors::readWalls(bool quick = true) {
-  WallData data = {false, false};
+WallData RoombaSensors::readWalls(const bool quick = true) {
+  WallData data = {.wall = false, .virtualWall = false};
 
   uint8_t value;
   if (getSensor(SENSOR_WALL, &value, 1)) data.wall = value != 0;
@@ -106,12 +106,12 @@ MovementData RoombaSensors::readMovement() {
 
   // Read distance (2 bytes, signed big-endian)
   if (getSensor(SENSOR_DISTANCE, bytes, 2)) {
-    data.distance = (int16_t)((bytes[0] << 8) | bytes[1]);
+    data.distance = static_cast<int16_t>((bytes[0] << 8) | bytes[1]);
   }
 
   // Read angle (2 bytes, signed big-endian)
   if (getSensor(SENSOR_ANGLE, bytes, 2)) {
-    data.angle = (int16_t)((bytes[0] << 8) | bytes[1]);
+    data.angle = static_cast<int16_t>((bytes[0] << 8) | bytes[1]);
   }
 
   return data;
@@ -124,28 +124,28 @@ BatteryData RoombaSensors::readBattery() {
 
   // Voltage (2 bytes, unsigned big-endian)
   if (getSensor(SENSOR_VOLTAGE, bytes, 2)) {
-    data.voltage = (uint16_t)((bytes[0] << 8) | bytes[1]);
+    data.voltage = static_cast<uint16_t>((bytes[0] << 8) | bytes[1]);
   }
 
   // Current (2 bytes, signed big-endian)
   if (getSensor(SENSOR_CURRENT, bytes, 2)) {
-    data.current = (int16_t)((bytes[0] << 8) | bytes[1]);
+    data.current = static_cast<int16_t>((bytes[0] << 8) | bytes[1]);
   }
 
   // Temperature (1 byte, signed)
   uint8_t temp;
   if (getSensor(SENSOR_TEMPERATURE, &temp, 1)) {
-    data.temperature = (int8_t)temp;
+    data.temperature = static_cast<int8_t>(temp);
   }
 
   // Charge (2 bytes, unsigned big-endian)
   if (getSensor(SENSOR_BATTERY_CHARGE, bytes, 2)) {
-    data.charge = (uint16_t)((bytes[0] << 8) | bytes[1]);
+    data.charge = static_cast<uint16_t>((bytes[0] << 8) | bytes[1]);
   }
 
   // Capacity (2 bytes, unsigned big-endian)
   if (getSensor(SENSOR_BATTERY_CAPACITY, bytes, 2)) {
-    data.capacity = (uint16_t)((bytes[0] << 8) | bytes[1]);
+    data.capacity = static_cast<uint16_t>((bytes[0] << 8) | bytes[1]);
   }
 
   // Charging state (1 byte)
@@ -161,7 +161,7 @@ short RoombaSensors::readDistance() {
   uint8_t bytes[2];
   int16_t distance = 0;
   if (getSensor(SENSOR_DISTANCE, bytes, 2)) {
-    distance = static_cast<int16_t>(((bytes[0] << 8) | bytes[1]);
+    distance = static_cast<int16_t>(((bytes[0] << 8) | bytes[1]));
   }
 
   return distance;
@@ -171,14 +171,14 @@ short RoombaSensors::readAngle() {
   uint8_t bytes[2];
   int16_t angle = 0;
   if (getSensor(SENSOR_ANGLE, bytes, 2)) {
-    angle = static_cast<int16_t>(((bytes[0] << 8) | bytes[1]);
+    angle = static_cast<int16_t>(((bytes[0] << 8) | bytes[1]));
   }
 
   return angle;
 }
 
 bool RoombaSensors::isBumperPressed() {
-  BumperData b = readBumpers();
+  const BumperData b = readBumpers();
   return b.anyBumper();
 }
 
@@ -187,12 +187,12 @@ uint8_t RoombaSensors::getDirt() {
 }
 
 bool RoombaSensors::isWallDetected(bool quick) {
-  WallData w = readWalls(quick);
+  const WallData w = readWalls(quick);
   return w.wall;
 }
 
 bool RoombaSensors::isCliffDetected() {
-  CliffData c = readCliffs();
+  const CliffData c = readCliffs();
   return c.anyCliff();
 }
 
@@ -210,22 +210,22 @@ uint16_t RoombaSensors::getBatteryVoltage() {
 }
 
 int16_t RoombaSensors::getBatteryCurrent() {
-  BatteryData b = readBattery();
+  const BatteryData b = readBattery();
   return b.current;
 }
 
 uint8_t RoombaSensors::getBatteryPercent() {
-  BatteryData b = readBattery();
+  const BatteryData b = readBattery();
   return b.getPercent();
 }
 
 bool RoombaSensors::isBatteryLow() {
-  BatteryData b = readBattery();
+  const BatteryData b = readBattery();
   return b.isLow();
 }
 
 bool RoombaSensors::isBatteryCritical() {
-  BatteryData b = readBattery();
+  const BatteryData b = readBattery();
   return b.isCritical();
 }
 
@@ -316,14 +316,14 @@ bool RoombaSensors::readBytes(uint8_t* buffer, uint8_t numBytes, uint16_t timeou
   return bytesRead == numBytes;
 }
 
-void RoombaSensors::debugPrint(const char* msg) {
+void RoombaSensors::debugPrint(const char* msg) const {
   if (_debug && msg) {
     Serial.print("RoombaSensors: ");
     Serial.println(msg);
   }
 }
 
-void RoombaSensors::debugPrint(const char* msg, int value) {
+void RoombaSensors::debugPrint(const char* msg, const int value) const {
   if (_debug && msg) {
     Serial.print("RoombaSensors: ");
     Serial.print(msg);

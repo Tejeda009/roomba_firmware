@@ -169,7 +169,7 @@ public:
 
   // Debug
   void setDebug(bool enable) { _debug = enable; }
-  void printSensorData(const RoombaSensorData& data);
+  static void printSensorData(const RoombaSensorData& data);
 
 private:
   RoombaSerial* _serial;
@@ -178,8 +178,8 @@ private:
   // Helper methods
   uint8_t readByte(uint16_t timeout = 100);
   bool readBytes(uint8_t* buffer, uint8_t numBytes, uint16_t timeout = 100);
-  void debugPrint(const char* msg);
-  void debugPrint(const char* msg, int value);
+  void debugPrint(const char* msg) const;
+  void debugPrint(const char* msg, int value) const;
 };
 
 #endif

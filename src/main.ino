@@ -55,13 +55,16 @@ using namespace std;
 #define SPIRAL_DELAY 1 // time necessary to do a spiral (at first)
 #define SPIRAL_SPEED 200 // speed when doing a spiral
 
-#define NORMAL_SPEED 350
 #define SLOW_SPEED 150
 #define HIGH_SPEED 450 // high speed ig
 #define RAD_INCREASE 50 // radius increase in a spiral
 #define SPEED_BEFORE_HIT 50 // self.explanatory
 #define BACKWARD_SPEED 100 // speed after hit
 #define COLLISION_DELAY 50 // polling delay for collision()
+
+// Map
+#define HEIGHT 300
+#define WIDTH 300
 
 
 RoombaConfig static config = RoombaConfig::createESP32(&Serial2, 5);
@@ -285,7 +288,7 @@ static void buttons() {
     const ButtonData buttons = roomba.sensors().readButtons();
     if (buttons.clean){
         switchClean();
-        clean();
+        clean(nullptr);
     }
     else if(buttons.spot){
         spot();
@@ -310,6 +313,9 @@ void clean(void* pvParameters) {
     unsigned long lastF1 = 0, lastF2 = 0, lastF3 = 0;
     unsigned long lastF4 = 0, lastF5 = 0, lastF6 = 0;
 
+    mapRoom<> map(roomba, HEIGHT, WIDTH);
+    map.start();
+
 
     for (;;) {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
@@ -322,12 +328,12 @@ void clean(void* pvParameters) {
 
         if (time - lastF2 >= F2) {
         lastF2 = time;
-            
+
         }
 
         if (time - lastF3 >= F3) {
         lastF3 = time;
-        
+            map.clean();
         }
 
         if (time - lastF4 >= F4) {
@@ -349,7 +355,7 @@ void clean(void* pvParameters) {
 
 // ============================= CLEAN ========================================
 
-static void collision(bool walling = false){ // TODO add IR and finish collision system
+/*static void collision(bool walling = false){ // TODO add IR and finish collision system
     if (roomba.isConnected() ) {
         if (roomba.isWallDetected(true) ) {
           roomba.moveForward(SPEED_BEFORE_HIT);
@@ -410,7 +416,7 @@ static bool dirtMed(const uint8_t dirt){
 static bool dirtHigh(const uint8_t dirt){
   return (dirt > DIRT_HIGH) ? true : false;
 }
-
+*/
 // ================================ SAFETY =========================
 
 static void safetyCheck() {

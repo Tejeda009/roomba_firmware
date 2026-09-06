@@ -6,7 +6,6 @@
 using namespace std;
 
 // Mapping
-constexpr uint8_t RESOLUTION = 10; // cm for map
 
 constexpr uint8_t START_MARK = 28; // 281 is too big
 constexpr short dx[4] = {1, -1, 0, 0};
