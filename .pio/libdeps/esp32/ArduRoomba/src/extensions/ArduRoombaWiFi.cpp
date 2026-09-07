@@ -77,8 +77,8 @@ CommandResult ArduRoombaWiFi::processCommand(const RoombaCommand& cmd) {
   return CommandResult::SUCCESS;
 }
 
-bool ArduRoombaWiFi::isValidAction(const String& action) const {
-  return action == "forward" || action == "backward" ||
+bool ArduRoombaWiFi::isValidAction(const String &action) {
+    return action == "forward" || action == "backward" ||
          action == "left" || action == "right" ||
          action == "spinLeft" || action == "spinRight" ||
          action == "stop" || action == "clean" ||
@@ -264,13 +264,13 @@ String ArduRoombaWiFi::generateControlPage() {
   return html;
 }
 
-String ArduRoombaWiFi::generateStatusJSON() {
-  uint16_t voltage = _roomba.getBatteryVoltage();
-  bool connected = _roomba.isConnected();
-  bool bumper = _roomba.isBumperPressed();
-  bool wall = _roomba.isWallDetected(false);
+String ArduRoombaWiFi::generateStatusJSON() const {
+    const uint16_t voltage = _roomba.getBatteryVoltage();
+    const bool connected = _roomba.isConnected();
+    const bool bumper = _roomba.isBumperPressed();
+    const bool wall = _roomba.isWallDetected(false);
 
-  String json = "{";
+    String json = "{";
   json += "\"voltage\":" + String(voltage) + ",";
   json += "\"connected\":" + String(connected ? "true" : "false") + ",";
   json += "\"bumper\":" + String(bumper ? "true" : "false") + ",";
@@ -281,16 +281,16 @@ String ArduRoombaWiFi::generateStatusJSON() {
   return json;
 }
 
-String ArduRoombaWiFi::generateExtendedStatusJSON() {
-  uint16_t voltage = _roomba.getBatteryVoltage();
-  int16_t current = _roomba.getBatteryCurrent();
-  uint8_t percent = _roomba.getBatteryPercent();
-  bool connected = _roomba.isConnected();
-  bool bumper = _roomba.isBumperPressed();
-  bool wall = _roomba.isWallDetected(false);
-  bool cliff = _roomba.isCliffDetected();
+String ArduRoombaWiFi::generateExtendedStatusJSON() const {
+    const uint16_t voltage = _roomba.getBatteryVoltage();
+    const int16_t current = _roomba.getBatteryCurrent();
+    const uint8_t percent = _roomba.getBatteryPercent();
+    const bool connected = _roomba.isConnected();
+    const bool bumper = _roomba.isBumperPressed();
+    const bool wall = _roomba.isWallDetected(false);
+    const bool cliff = _roomba.isCliffDetected();
 
-  String json = "{";
+    String json = "{";
   json += "\"voltage\":" + String(voltage) + ",";
   json += "\"current\":" + String(current) + ",";
   json += "\"battery_percent\":" + String(percent) + ",";
@@ -299,14 +299,14 @@ String ArduRoombaWiFi::generateExtendedStatusJSON() {
   json += "\"wall\":" + String(wall ? "true" : "false") + ",";
   json += "\"cliff\":" + String(cliff ? "true" : "false") + ",";
   json += "\"remote_enabled\":" + String(_remoteEnabled ? "true" : "false") + ",";
-  json += "\"mode\":\"" + getModeString() + "\",";
-  json += "\"ip\":\"" + getIPAddress() + "\"";
-  json += "}";
+  json += R"("mode":")" + getModeString() + "\",";
+    json += R"("ip":")" + getIPAddress() + "\"";
+    json += "}";
 
   return json;
 }
 
-void ArduRoombaWiFi::startWebServer(uint16_t port) {
-  _serverPort = port;
+void ArduRoombaWiFi::startWebServer(const uint16_t port) {
+    _serverPort = port;
   // Implemented by platform-specific class
 }

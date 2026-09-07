@@ -22,7 +22,7 @@ public:
   ArduRoombaESP32WiFi(ArduRoomba& roomba);
   ~ArduRoombaESP32WiFi();
 
-  WebServer* getServer() { return _server; }
+  WebServer *getServer() const { return _server; }
 
   // WiFi setup
   bool beginAP(const char* ssid, const char* password = nullptr) override;
@@ -48,11 +48,12 @@ private:
   // HTTP request handlers
   void handleRoot();
   void handleCommand();
-  void handleStatus();
-  void handleNotFound();
+  void handleStatus() const;
+
+  void handleNotFound() const;
 
   // Helper to parse command from request
-  RoombaCommand parseCommand();
+  RoombaCommand parseCommand() const;
 };
 
 #endif // ESP32

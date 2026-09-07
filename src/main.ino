@@ -32,7 +32,6 @@ using namespace std;
 #define PWD "Qwert128mz"
 #define LOW_BATT 14000
 #define CRITICAL_BATT 13000 // standard for LiPO
-#define SSID "Roomba"
 //#define BLEID "Roomba"
 #define LED_PIN 2
 #define RATE 50 // rate limiting for network commands
@@ -78,7 +77,7 @@ TaskHandle_t static xNormal = nullptr;
 TaskHandle_t static xClean = nullptr;
 TaskHandle_t static xNetwork = nullptr;
 
-mapRoom<> Map(roomba, HEIGHT, WIDTH);
+static mapRoom<> Map(roomba, HEIGHT, WIDTH);
 
 constexpr unsigned long F1 = 10;
 constexpr unsigned long F2 = 20;
@@ -94,7 +93,6 @@ static void status();
 static void spiraling(uint8_t circles);
 static void errorBlink();
 static void startTask();
-static void network();
 static void startWifi();
 static bool dirtHigh(uint8_t dirt);
 static bool dirtMed(uint8_t dirt);
@@ -149,6 +147,8 @@ void loop() {
 
 // ============================== NETWORK ==================================
 
+void switchClean();
+
 static void startWifi() {
     #if USE_AP_MODE
             // Access Point mode
@@ -192,10 +192,49 @@ static void startWifi() {
             Serial.println(" dBm");
         #endif
 
-        wifi.getServer()->on("/map", HTTP_GET, []() {
+    wifi.getServer()->on("/cmd", HTTP_GET, []() {
+                const String action = wifi.getServer()->arg("action");
+                wifi.getServer()->sendHeader("Access-Control-Allow-Origin", "*");
+
+                if (action == "clean") {
+                    switchClean();
+                    wifi.getServer()->send(200, "text/plain", "OK");
+                } else if (action == "spot") {
+                    spot();
+                    wifi.getServer()->send(200, "text/plain", "OK");
+                } else if (action == "dock") {
+                    dock();
+                    wifi.getServer()->send(200, "text/plain", "OK");
+                } else if (action == "stop") {
+                    roomba.stop();
+                    wifi.getServer()->send(200, "text/plain", "OK");
+                } else if (action == "forward") {
+                    roomba.moveForward(200);
+                    wifi.getServer()->send(200, "text/plain", "OK");
+                } else if (action == "backward") {
+                    roomba.moveBackward(200);
+                    wifi.getServer()->send(200, "text/plain", "OK");
+                } else if (action == "left") {
+                    roomba.turnLeft(200);
+                    wifi.getServer()->send(200, "text/plain", "OK");
+                } else if (action == "right") {
+                    roomba.turnRight(200);
+                    wifi.getServer()->send(200, "text/plain", "OK");
+                } else if (action == "spinLeft") {
+                    roomba.spinLeft(200);
+                    wifi.getServer()->send(200, "text/plain", "OK");
+                } else if (action == "spinRight") {
+                    roomba.spinRight(200);
+                    wifi.getServer()->send(200, "text/plain", "OK");
+                } else {
+                    wifi.getServer()->send(400, "text/plain", "Unknown action");
+                }
+            });
+
+            wifi.getServer()->on("/map", HTTP_GET, []() {
     
     // Richiama la funzione (che hai aggiunto in map.h) per ottenere il JSON
-        String json = Map.getMapJSON(); 
+        const String json = Map.getMapJSON();
         
         // Invia la risposta al browser
         wifi.getServer()->sendHeader("Access-Control-Allow-Origin", "*");
@@ -203,16 +242,6 @@ static void startWifi() {
   });
 }
 
-static void network(){
-
-  wifi.handleClient();
-  //ble.updateStatus();
-
-  /*if(millis() - lastCommandTime > RATE){
-    return;
-  }*/
-
-}
 
 // ============================== TASKS =================================
 
@@ -256,7 +285,6 @@ void normal(void* pvParameters) {
         
         if (time - lastF2 >= F2) {
         lastF2 = time;
-            network();
         }
 
         if (time - lastF3 >= F3) {
@@ -280,11 +308,11 @@ void taskNetwork(void *pvParameters) {
 
     for (;;) {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        network();
+        wifi.handleClient();
     }
 }
 
-static void switchClean() {
+void switchClean() {
     deleteTask(xNormal);
     xTaskCreatePinnedToCore(
         clean,
@@ -301,7 +329,6 @@ static void buttons() {
     const ButtonData buttons = roomba.sensors().readButtons();
     if (buttons.clean){
         switchClean();
-        clean(nullptr);
     }
     else if(buttons.spot){
         spot();
@@ -312,11 +339,11 @@ static void buttons() {
 }
 
 static void spot() {
-    return;
+    roomba.stop();
 }
 
 static void dock() {
-    return;
+    roomba.dock();
 }
 
 void clean(void* pvParameters) {

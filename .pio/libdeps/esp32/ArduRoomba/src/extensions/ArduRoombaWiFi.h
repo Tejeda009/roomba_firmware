@@ -26,7 +26,7 @@ enum class WiFiMode : uint8_t {
  * Command protocol for WiFi control
  */
 struct RoombaCommand {
-  char action[16];   // "forward", "backward", "left", "right", "stop", "clean", "dock", "spinLeft", "spinRight"
+  char action[16]{}; // "forward", "backward", "left", "right", "stop", "clean", "dock", "spinLeft", "spinRight"
   int16_t speed;     // Speed parameter (0-500)
   int16_t duration;  // Duration in milliseconds (0 = continuous)
 
@@ -81,16 +81,18 @@ public:
   // Command processing
   CommandResult processCommand(const RoombaCommand& cmd);
 
+  bool isValidAction(const String &action);
+
   // Callbacks
   typedef void (*CommandCallback)(const RoombaCommand& cmd, CommandResult result);
-  void setCommandCallback(CommandCallback callback) { _commandCallback = callback; }
+  void setCommandCallback(const CommandCallback callback) { _commandCallback = callback; }
 
   // Enable/disable remote control
-  void enableRemoteControl(bool enable) { _remoteEnabled = enable; }
+  void enableRemoteControl(const bool enable) { _remoteEnabled = enable; }
   bool isRemoteEnabled() const { return _remoteEnabled; }
 
   // Safety threshold
-  void setLowBatteryThreshold(uint16_t mV) { _lowBatteryThreshold = mV; }
+  void setLowBatteryThreshold(const uint16_t mV) { _lowBatteryThreshold = mV; }
   uint16_t getLowBatteryThreshold() const { return _lowBatteryThreshold; }
 
 protected:
@@ -101,13 +103,13 @@ protected:
   uint16_t _serverPort;
 
   // Helper to generate HTML control page
-  String generateControlPage();
+  static String generateControlPage();
 
   // Helper to generate JSON status
-  String generateStatusJSON();
+  String generateStatusJSON() const;
 
   // Helper to generate status with extended info
-  String generateExtendedStatusJSON();
+  String generateExtendedStatusJSON() const;
 
   // Parse action from string
   bool isValidAction(const String& action) const;

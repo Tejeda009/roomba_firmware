@@ -118,13 +118,13 @@ class mapRoom {
     }
 
     void calculateCells(const bool sendCommand = true) {
-      const float timePassed = (millis() - lastTime) / 1000.0; // millis to seconds
+      const float timePassed = (millis() - lastTime) / 1000.0f; // millis to seconds
       const short distance = mergeDistance(roomba.getDistance(), static_cast<float>(NORMAL_SPEED) * timePassed); // get distance
 
       if ( distance >= RESOLUTION) {
         const float app = static_cast<float>(distance) / static_cast<float>(RESOLUTION); // total cells passed
         auto cells = static_cast<uint8_t>(app); // integer part
-        dec += (static_cast<float>(cells) - app) * 100; // decimal part of the division
+        dec += (app - static_cast<float>(cells)) * 100; // decimal part of the division
 
         if ( dec >= 100) { // if the remaining decimal is bigger than a cell add it to the map
           cells += 1;
@@ -176,26 +176,25 @@ class mapRoom {
             currentAngle = 0;
             uTurnPhase = 0;
             state = TURNING;
-            const short null = roomba.getAngle();
+            (void) roomba.getAngle();
             roomba.spinLeft(TURN_SPEED);
           }
           calculateCells(true);
           break;
 
-        case TURNING:
+        case TURNING: {
           short currAngle = roomba.getAngle();
           if (uTurnPhase == 0) {
             currentAngle += (static_cast<float>(currAngle) * factor);
 
             if ( abs(currentAngle) > static_cast<float>(currAngle) ) {
-              const short null = roomba.getDistance(); // reset distance
+              (void) roomba.getDistance(); // reset distance
               roomba.moveForward(NORMAL_SPEED);
               lastTime = millis();
               uTurnPhase = 1;
             }
-          }
-          if (uTurnPhase == 1) {
-            const float timePassed = millis() - lastTime;
+          } else if (uTurnPhase == 1) {
+            const float timePassed = (millis() - lastTime) / 1000.0f;
             const short distance = mergeDistance(roomba.getDistance(), NORMAL_SPEED * static_cast<short>(timePassed));
             const short difference = distance - RESOLUTION;
 
@@ -206,22 +205,22 @@ class mapRoom {
             }
             else if (difference < -range) {
               roomba.stop();
-              roomba.moveBackward(NORMAL_SPEED);
+              roomba.moveForward(NORMAL_SPEED);
               vTaskDelay(pdMS_TO_TICKS(20));
             }
 
             roomba.stop();
             currentAngle = 0;
             uTurnPhase = 2;
-            const short null = roomba.getAngle();
+            (void) roomba.getAngle();
             roomba.spinRight(TURN_SPEED);
           }
-          if (uTurnPhase == 2) {
+          else if (uTurnPhase == 2) {
             currAngle = roomba.getAngle();
             currentAngle  += static_cast<float>(currAngle) * factor;
 
             if ( abs(currentAngle) > static_cast<float>(angle) )  {
-              const short nil = roomba.getDistance();
+              (void) roomba.getDistance();
               roomba.moveForward(NORMAL_SPEED);
               lastTime = millis();
               uTurnPhase = 0;
@@ -235,9 +234,10 @@ class mapRoom {
               curr.x -= 1;
             }
           }
-
-          break;
-
+        }
+        break;
+        default:
+          Serial.println("Unknown state");
       }
     }
 
@@ -261,7 +261,7 @@ class mapRoom {
 
     bool check(const short nx, const short ny, const bool countPassed = false) const {
       const uint8_t cell = readCell(nx, ny);
-      return (cell == FREE) || (countPassed && cell == FREE);
+      return (cell == FREE) || (countPassed && cell == PASSED);
     }
 
     directions getDirection(const short x, const short y, const bool countPassed = false) const {
